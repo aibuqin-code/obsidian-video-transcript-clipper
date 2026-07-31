@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.0 - 2026-07-31
+
+- Replaced foreground-activating `obsidian://` saves with authenticated Local REST API writes.
+- Added a compact connection test and clear success/failure feedback.
+- Added exact read-back verification before reporting success.
+- Identical notes are not duplicated; conflicting paths are saved with a numeric suffix instead of overwritten.
+- Restricted API endpoints to local loopback addresses and kept the API key in browser-local storage only.
+- Added seven REST-save tests; the full suite now contains 27 tests.
+
 ## 0.8.1 - 2026-07-31
 
 - Added `processing_status: pending` to new raw transcripts.

@@ -259,7 +259,8 @@ summary {
   font-size: 10px;
 }
 
-input[type="text"] {
+input[type="text"],
+input[type="password"] {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -270,8 +271,20 @@ input[type="text"] {
   outline: none;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="password"]:focus {
   border-color: var(--accent);
+}
+
+.connection-test {
+  width: 100%;
+}
+
+.settings-help {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
 }
 
 .settings .check-row {

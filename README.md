@@ -35,7 +35,7 @@ It does **not** download full videos or run a local speech-recognition model. If
 - Modes: Smart, 中文, English, bilingual, and follow-player.
 - Speaker context: single (default), two-person, or multi-person. AI speaker instructions are emitted only when the user selects two or multi.
 - Optional timestamps, disabled by default.
-- Copy Markdown, download `.md`, preview, or save through an Obsidian URI.
+- Copy Markdown, download `.md`, preview, or write through Obsidian Local REST API without switching applications.
 - No private subtitle backend, analytics, account export, or full-video download.
 
 ## Install
@@ -45,9 +45,20 @@ It does **not** download full videos or run a local speech-recognition model. If
 3. Open `chrome://extensions/`.
 4. Enable **Developer mode**.
 5. Click **Load unpacked** and select the folder containing `manifest.json`.
-6. Open the extension’s **保存设置** and enter your own Obsidian Vault ID and target folder.
+6. Open the extension’s **保存设置** and enter your own target folder and Local REST API connection details.
 
 Do not move or delete the unpacked folder while the extension is installed.
+
+### Enable true background saving
+
+The normal `obsidian://` URI can activate the Obsidian application even when a “silent” parameter is present. To keep the browser in front, this extension uses the open-source [Obsidian Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api) plugin instead.
+
+1. Install and enable **Local REST API** in Obsidian.
+2. In its settings, enable the loopback HTTP server (`http://127.0.0.1:27123`).
+3. Copy its API key into this extension’s collapsed **保存设置** panel.
+4. Click **测试后台连接** once.
+
+The key is stored only in the current Chrome profile. Requests are restricted to `127.0.0.1` or `localhost`; the extension does not send the key or transcript to a remote server.
 
 ## Supported behavior
 
@@ -65,27 +76,30 @@ Single-speaker mode is the default and does not ask AI to invent roles. When two
 
 New notes enter the knowledge workflow as `processing_status: pending` and contain a portable Obsidian link to `[[视频逐字稿处理规则]]`. Users can later say “process this”, “discuss this video”, or similar natural language: the shared rule separates a readable derivative, a no-write conversation, and a durable source interpretation while preserving the raw transcript.
 
+Background saves are acknowledged only after an authenticated write and exact read-back verification. Identical files are not duplicated. If the target path exists with different content, the extension creates a numbered sibling instead of overwriting it.
+
 Video descriptions prefer platform-native fields: Bilibili video-detail data and YouTube `videoDetails.shortDescription`. Page Meta is only a fallback and is visibly marked; known Bilibili playback-statistics and recommendation pollution is trimmed. Author-written links to earlier videos remain part of the original description.
 
 The extension only normalizes whitespace and consecutive duplicates; it does not mix summaries or AI-generated claims into the transcript.
 
 ## Privacy
 
-See [PRIVACY.md](PRIVACY.md). The distributable source contains no personal Vault ID, account, email, absolute local path, browser history, real course transcript, private token, or third-party quota.
+See [PRIVACY.md](PRIVACY.md). The distributable source contains no personal Vault ID, Local REST API key, account, email, absolute local path, browser history, real course transcript, private token, or third-party quota.
 
 ## Development
 
 ```bash
-node --test tests/transcript.test.mjs
+npm test
 ```
 
-The current suite covers transcript cleanup, timestamps, pending-processing metadata, speaker-mode boundaries, description contamination, bilingual alignment, language protection, platform detection, Bilibili subtitle resources, YouTube caption metadata/JSON3, and Xiaoe timed-text parsing.
+The current suite covers REST authentication boundaries, loopback-only URLs, write/read-back verification, duplicate and conflict handling, transcript cleanup, timestamps, pending-processing metadata, speaker-mode boundaries, description contamination, bilingual alignment, language protection, platform detection, Bilibili subtitle resources, YouTube caption metadata/JSON3, and Xiaoe timed-text parsing.
 
 ## Limitations
 
 - Hardcoded subtitles burned into video frames require OCR and are not supported.
 - Platform UI and internal caption APIs may change.
 - Xiaoe support is experimental because subtitle availability depends on the merchant/course configuration.
+- True background saving requires Obsidian to be running with Local REST API enabled. Copy and download remain available without it.
 - This extension does not bypass login, payment, access control, or DRM.
 
 ## License

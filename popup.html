@@ -63,7 +63,7 @@
       <i aria-hidden="true"></i>
     </label>
 
-    <button id="save" class="primary" type="button">存入 Obsidian</button>
+    <button id="save" class="primary" type="button">静默存入 Obsidian</button>
 
     <div class="secondary-actions">
       <button id="copy" type="button">复制 Markdown</button>
@@ -81,19 +81,22 @@
       <summary>保存设置</summary>
       <div class="settings">
         <label>
-          <span>Vault ID</span>
-          <input id="vault-id" type="text" spellcheck="false" autocomplete="off"
-            placeholder="首次使用时填写">
+          <span>Local REST API 地址</span>
+          <input id="rest-api-url" type="text" spellcheck="false" autocomplete="off"
+            placeholder="http://127.0.0.1:27123">
+        </label>
+        <label>
+          <span>API Key（只保存在当前浏览器）</span>
+          <input id="rest-api-key" type="password" spellcheck="false" autocomplete="off"
+            placeholder="从 Obsidian Local REST API 设置复制">
         </label>
         <label>
           <span>保存目录</span>
           <input id="target-folder" type="text" spellcheck="false" autocomplete="off"
             placeholder="例如：Inbox/视频逐字稿">
         </label>
-        <label class="check-row">
-          <input id="silent-save" type="checkbox">
-          <span>静默保存</span>
-        </label>
+        <button id="test-connection" class="connection-test" type="button">测试后台连接</button>
+        <p class="settings-help">需要 Obsidian 保持运行并启用 Local REST API。保存时不会打开笔记，也不会抢占当前窗口。</p>
       </div>
     </details>
   </main>

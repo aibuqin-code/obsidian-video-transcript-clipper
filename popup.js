@@ -2,15 +2,19 @@ import {
   DEFAULT_SETTINGS,
   buildFilePath,
   buildMarkdown,
-  buildObsidianUri,
   dedupeConsecutive
 } from "./lib/transcript.mjs";
+import {
+  saveMarkdownViaRest,
+  testObsidianRestConnection
+} from "./lib/obsidian-rest.mjs";
 import { detectPlatform } from "./lib/platform.mjs";
 
 const elements = {
-  vaultId: document.querySelector("#vault-id"),
   targetFolder: document.querySelector("#target-folder"),
-  silentSave: document.querySelector("#silent-save"),
+  restApiUrl: document.querySelector("#rest-api-url"),
+  restApiKey: document.querySelector("#rest-api-key"),
+  testConnection: document.querySelector("#test-connection"),
   includeTimestamps: document.querySelector("#include-timestamps"),
   subtitleMode: document.querySelector("#subtitle-mode"),
   speakerMode: document.querySelector("#speaker-mode"),
@@ -25,6 +29,7 @@ const elements = {
 };
 
 let cachedResult = null;
+let loadedSettings = { ...DEFAULT_SETTINGS };
 
 function setStatus(message, kind = "neutral") {
   elements.status.textContent = message;
@@ -36,13 +41,15 @@ function setBusy(isBusy) {
   elements.save.disabled = isBusy;
   elements.copy.disabled = isBusy;
   elements.download.disabled = isBusy;
+  elements.testConnection.disabled = isBusy;
 }
 
 function currentSettings() {
   return {
-    vaultId: elements.vaultId.value.trim(),
+    ...loadedSettings,
     targetFolder: elements.targetFolder.value.trim(),
-    silentSave: elements.silentSave.checked,
+    restApiUrl: elements.restApiUrl.value.trim(),
+    restApiKey: elements.restApiKey.value.trim(),
     includeTimestamps: elements.includeTimestamps.checked,
     subtitleMode: elements.subtitleMode.value,
     speakerMode: elements.speakerMode.value,
@@ -57,9 +64,10 @@ async function persistSettings() {
 async function loadSettings() {
   const stored = await chrome.storage.local.get("settings");
   const settings = { ...DEFAULT_SETTINGS, ...(stored.settings || {}) };
-  elements.vaultId.value = settings.vaultId;
+  loadedSettings = settings;
   elements.targetFolder.value = settings.targetFolder;
-  elements.silentSave.checked = settings.silentSave;
+  elements.restApiUrl.value = settings.restApiUrl;
+  elements.restApiKey.value = settings.restApiKey;
   elements.includeTimestamps.checked = settings.includeTimestamps;
   elements.subtitleMode.value = settings.subtitleMode;
   elements.speakerMode.value = settings.speakerMode;
@@ -215,15 +223,6 @@ async function persistRenderSettings() {
   await persistSettings();
 }
 
-async function openObsidian(uri) {
-  const link = document.createElement("a");
-  link.href = uri;
-  link.style.display = "none";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
-
 async function saveToObsidian() {
   setBusy(true);
   try {
@@ -234,11 +233,21 @@ async function saveToObsidian() {
       entryCount,
       languageSummary
     } = await prepareMarkdown();
-    await copyMarkdown(markdown);
-    const uri = buildObsidianUri(filePath, currentSettings());
-    await openObsidian(uri);
+    const settings = currentSettings();
+    setStatus("正在后台写入 Obsidian……");
+    const saved = await saveMarkdownViaRest({
+      filePath,
+      markdown,
+      restApiUrl: settings.restApiUrl,
+      restApiKey: settings.restApiKey
+    });
+    const headline = saved.status === "unchanged"
+      ? "这份逐字稿已经存在，无需重复写入。"
+      : saved.status === "created-with-suffix"
+        ? "同名文件已存在，已静默另存一份。"
+        : "已静默存入 Obsidian，未切换窗口。";
     setStatus(
-      `已交给 Obsidian 保存：\n${filePath}\n\n${languageSummary}，共 ${entryCount} 条字幕；原始 Markdown 同时保留在剪贴板。`,
+      `${headline}\n${saved.filePath}\n\n${languageSummary}，共 ${entryCount} 条字幕。`,
       "success"
     );
   } catch (error) {
@@ -246,6 +255,20 @@ async function saveToObsidian() {
       ? "\n\n这不是保存故障：当前页面没有平台现成字幕。Mac 端不会启动本地转写模型。"
       : "";
     setStatus(`${error?.message || String(error)}${suffix}`, "error");
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function testConnection() {
+  setBusy(true);
+  try {
+    await persistSettings();
+    setStatus("正在检查 Obsidian 后台连接……");
+    await testObsidianRestConnection(currentSettings());
+    setStatus("连接成功。之后可静默写入，不会唤起或切换 Obsidian 窗口。", "success");
+  } catch (error) {
+    setStatus(error?.message || String(error), "error");
   } finally {
     setBusy(false);
   }
@@ -298,11 +321,12 @@ async function downloadMarkdown() {
 }
 
 elements.save.addEventListener("click", saveToObsidian);
+elements.testConnection.addEventListener("click", testConnection);
 elements.copy.addEventListener("click", copyOnly);
 elements.download.addEventListener("click", downloadMarkdown);
-elements.vaultId.addEventListener("change", persistSettings);
 elements.targetFolder.addEventListener("change", persistSettings);
-elements.silentSave.addEventListener("change", persistSettings);
+elements.restApiUrl.addEventListener("change", persistSettings);
+elements.restApiKey.addEventListener("change", persistSettings);
 elements.includeTimestamps.addEventListener("change", persistRenderSettings);
 elements.speakerMode.addEventListener("change", persistRenderSettings);
 elements.subtitleMode.addEventListener("change", persistExtractionSettings);
