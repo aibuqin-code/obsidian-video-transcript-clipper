@@ -88,10 +88,6 @@ The current suite covers transcript cleanup, timestamps, pending-processing meta
 - Xiaoe support is experimental because subtitle availability depends on the merchant/course configuration.
 - This extension does not bypass login, payment, access control, or DRM.
 
-## Authorship
-
-Product direction, language rules, privacy boundaries, and real-browser testing were led by [aibuqin-code](https://github.com/aibuqin-code). Implementation was developed with AI assistance and independently reviewed through tests and failure-path checks.
-
 ## License
 
 MIT. See [LICENSE](LICENSE).
