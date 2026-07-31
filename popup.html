@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Obsidian 视频剪藏</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <img src="icons/icon48.png" alt="" width="38" height="38">
+        <div>
+          <h1>视频剪藏</h1>
+          <p>平台字幕 → Markdown</p>
+        </div>
+      </div>
+      <span id="platform-label" class="platform-mark">识别中</span>
+    </header>
+
+    <label class="choice-row">
+      <span>
+        <strong>字幕</strong>
+        <small>英文原声优先保留英文</small>
+      </span>
+      <select id="subtitle-mode" aria-label="字幕语言模式">
+        <option value="smart">智能</option>
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+        <option value="bilingual">中英双语</option>
+        <option value="follow-player">跟随播放器</option>
+      </select>
+    </label>
+
+    <label class="choice-row">
+      <span>
+        <strong>说话人</strong>
+        <small>默认单人；按需提示 AI 分角色</small>
+      </span>
+      <select id="speaker-mode" aria-label="说话人模式">
+        <option value="single">单人</option>
+        <option value="two">双人</option>
+        <option value="multi">多人</option>
+      </select>
+    </label>
+
+    <label class="switch-row">
+      <span>
+        <strong>自动选择字幕</strong>
+        <small>静默选轨；必要时提示手动操作</small>
+      </span>
+      <input id="auto-enable-subtitles" type="checkbox" aria-label="自动选择播放器字幕">
+      <i aria-hidden="true"></i>
+    </label>
+
+    <label class="switch-row">
+      <span>
+        <strong>时间戳</strong>
+        <small>回看或剪辑时开启</small>
+      </span>
+      <input id="include-timestamps" type="checkbox" aria-label="保留时间戳">
+      <i aria-hidden="true"></i>
+    </label>
+
+    <button id="save" class="primary" type="button">存入 Obsidian</button>
+
+    <div class="secondary-actions">
+      <button id="copy" type="button">复制 Markdown</button>
+      <button id="download" type="button">下载 .md</button>
+    </div>
+
+    <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+
+    <details id="preview-panel" class="utility-panel" hidden>
+      <summary>查看 Markdown</summary>
+      <textarea id="preview" readonly spellcheck="false" aria-label="Markdown 预览"></textarea>
+    </details>
+
+    <details class="utility-panel settings-panel">
+      <summary>保存设置</summary>
+      <div class="settings">
+        <label>
+          <span>Vault ID</span>
+          <input id="vault-id" type="text" spellcheck="false" autocomplete="off"
+            placeholder="首次使用时填写">
+        </label>
+        <label>
+          <span>保存目录</span>
+          <input id="target-folder" type="text" spellcheck="false" autocomplete="off"
+            placeholder="例如：Inbox/视频逐字稿">
+        </label>
+        <label class="check-row">
+          <input id="silent-save" type="checkbox">
+          <span>静默保存</span>
+        </label>
+      </div>
+    </details>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

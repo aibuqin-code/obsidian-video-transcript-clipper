@@ -1,0 +1,11 @@
+{
+  "name": "obsidian-video-transcript-clipper",
+  "version": "0.8.1",
+  "private": true,
+  "description": "Chrome extension for Bilibili, YouTube and Xiaoe subtitles to Obsidian Markdown.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/transcript.test.mjs",
+    "check": "node --check background.js && node --check popup.js && node --check content-bilibili.js && node --check content-youtube.js && node --check content-xiaoe.js"
+  }
+}
