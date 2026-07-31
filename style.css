@@ -12,6 +12,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   width: 320px;
   margin: 0;
@@ -53,7 +57,7 @@ h1 {
   font-family: "Kaiti SC", "STKaiti", "KaiTi", serif;
   font-size: 22px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 header p {
@@ -70,7 +74,7 @@ header p {
   padding: 4px 7px;
   color: var(--muted);
   font: 9px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

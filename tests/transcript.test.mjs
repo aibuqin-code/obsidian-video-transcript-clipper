@@ -314,7 +314,7 @@ test("生成新版字幕接口并解析 BV 号", () => {
   assert.match(url, /pid=123/);
 });
 
-test("识别三类受支持的视频页面", () => {
+test("识别三类视频页面并拒绝普通网页", () => {
   assert.equal(
     detectPlatform("https://www.bilibili.com/video/BV1TEST")?.id,
     "bilibili"

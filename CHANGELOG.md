@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0 - 2026-07-31
+
+- Expanded the product from a video-only clipper to a multi-source Obsidian capture tool.
+- Added a linux.do adapter that reads complete accessible topics without requiring a full-page scroll.
+- Added main post, topic-author replies and all-floor capture scopes.
+- Preserved floor metadata, topic-author markers, reply relationships, remote images, quotes, code, lists and tables.
+- Added source-specific target folders and `discussion-thread-v1` pending-processing metadata.
+- Documented the complementary boundary with Obsidian Web Clipper.
+- Credited the MIT-licensed `linux.do 帖子保存到 Obsidian` userscript by `zsq`.
+- Kept all existing Bilibili, YouTube, Xiaoe and background-save behavior.
+
 ## 0.9.0 - 2026-07-31
 
 - Replaced foreground-activating `obsidian://` saves with authenticated Local REST API writes.

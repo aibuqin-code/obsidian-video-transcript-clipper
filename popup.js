@@ -9,9 +9,15 @@ import {
   testObsidianRestConnection
 } from "./lib/obsidian-rest.mjs";
 import { detectPlatform } from "./lib/platform.mjs";
+import {
+  buildDiscussionFilePath,
+  buildDiscussionMarkdown
+} from "./lib/linuxdo.mjs";
 
 const elements = {
   targetFolder: document.querySelector("#target-folder"),
+  linuxdoTargetFolder: document.querySelector("#linuxdo-target-folder"),
+  linuxdoScope: document.querySelector("#linuxdo-scope"),
   restApiUrl: document.querySelector("#rest-api-url"),
   restApiKey: document.querySelector("#rest-api-key"),
   testConnection: document.querySelector("#test-connection"),
@@ -30,6 +36,7 @@ const elements = {
 
 let cachedResult = null;
 let loadedSettings = { ...DEFAULT_SETTINGS };
+let activePlatform = null;
 
 function setStatus(message, kind = "neutral") {
   elements.status.textContent = message;
@@ -48,6 +55,8 @@ function currentSettings() {
   return {
     ...loadedSettings,
     targetFolder: elements.targetFolder.value.trim(),
+    linuxdoTargetFolder: elements.linuxdoTargetFolder.value.trim(),
+    linuxdoScope: elements.linuxdoScope.value,
     restApiUrl: elements.restApiUrl.value.trim(),
     restApiKey: elements.restApiKey.value.trim(),
     includeTimestamps: elements.includeTimestamps.checked,
@@ -66,6 +75,8 @@ async function loadSettings() {
   const settings = { ...DEFAULT_SETTINGS, ...(stored.settings || {}) };
   loadedSettings = settings;
   elements.targetFolder.value = settings.targetFolder;
+  elements.linuxdoTargetFolder.value = settings.linuxdoTargetFolder;
+  elements.linuxdoScope.value = settings.linuxdoScope;
   elements.restApiUrl.value = settings.restApiUrl;
   elements.restApiKey.value = settings.restApiKey;
   elements.includeTimestamps.checked = settings.includeTimestamps;
@@ -79,19 +90,32 @@ async function activeSupportedTab() {
   const tab = tabs[0];
   const platform = detectPlatform(tab?.url);
   if (!tab?.id || !platform) {
-    throw new Error("请先打开 B站、YouTube 或小鹅通的视频页面。");
+    throw new Error("请先打开受支持的视频页面或 linux.do 主题。");
   }
   return { tab, platform };
+}
+
+function setPlatformPresentation(platform) {
+  activePlatform = platform;
+  const isDiscussion = platform?.kind === "discussion-thread";
+  document.querySelectorAll(".video-only").forEach(element => {
+    element.hidden = isDiscussion;
+  });
+  document.querySelectorAll(".linuxdo-only").forEach(element => {
+    element.hidden = !isDiscussion;
+  });
+  elements.platformLabel.textContent = platform?.label || "未识别";
 }
 
 async function extract() {
   if (cachedResult) return cachedResult;
 
   const { tab, platform } = await activeSupportedTab();
-  elements.platformLabel.textContent = platform.label;
+  setPlatformPresentation(platform);
   const settings = currentSettings();
-  setStatus(
-    settings.autoEnableSubtitles
+  setStatus(platform.kind === "discussion-thread"
+    ? `正在读取 ${platform.label} 完整主题……`
+    : settings.autoEnableSubtitles
       ? `正在静默选择并读取${platform.label}字幕……`
       : `正在读取${platform.label}当前字幕……`
   );
@@ -101,10 +125,12 @@ async function extract() {
     world: "MAIN",
     func: options => {
       window.__OBSIDIAN_VIDEO_CLIPPER_OPTIONS__ = options;
+      window.__OBSIDIAN_KNOWLEDGE_CLIPPER_OPTIONS__ = options;
     },
     args: [{
       subtitleMode: settings.subtitleMode,
-      autoEnableSubtitles: settings.autoEnableSubtitles
+      autoEnableSubtitles: settings.autoEnableSubtitles,
+      postScope: settings.linuxdoScope
     }]
   });
 
@@ -162,24 +188,27 @@ async function extract() {
 async function prepareMarkdown() {
   const result = await extract();
   const now = new Date();
-  const markdown = buildMarkdown(result, now, {
-    includeTimestamps: currentSettings().includeTimestamps,
-    speakerMode: currentSettings().speakerMode
-  });
-  const filePath = buildFilePath(result, currentSettings(), now);
+  const settings = currentSettings();
+  const isDiscussion = result.kind === "discussion-thread";
+  const markdown = isDiscussion
+    ? buildDiscussionMarkdown(result, now, { postScope: settings.linuxdoScope })
+    : buildMarkdown(result, now, {
+      includeTimestamps: settings.includeTimestamps,
+      speakerMode: settings.speakerMode
+    });
+  const filePath = isDiscussion
+    ? buildDiscussionFilePath(result, settings)
+    : buildFilePath(result, settings, now);
   if (elements.preview) {
     elements.preview.value = markdown;
     elements.previewPanel.hidden = false;
   }
-  return {
-    result,
-    markdown,
-    filePath,
-    entryCount: dedupeConsecutive(result.entries).length,
-    languageSummary: result.translationLanguage
+  const itemSummary = isDiscussion
+    ? `${result.posts.length} / ${result.totalPostCount || result.posts.length} 个楼层`
+    : `${result.translationLanguage
       ? `${result.primaryLanguage || "原语言"} + ${result.translationLanguage}`
-      : (result.primaryLanguage || "语言未识别")
-  };
+      : (result.primaryLanguage || "语言未识别")}，共 ${dedupeConsecutive(result.entries).length} 条字幕`;
+  return { result, markdown, filePath, itemSummary };
 }
 
 async function copyMarkdown(markdown) {
@@ -230,8 +259,7 @@ async function saveToObsidian() {
     const {
       markdown,
       filePath,
-      entryCount,
-      languageSummary
+      itemSummary
     } = await prepareMarkdown();
     const settings = currentSettings();
     setStatus("正在后台写入 Obsidian……");
@@ -242,12 +270,12 @@ async function saveToObsidian() {
       restApiKey: settings.restApiKey
     });
     const headline = saved.status === "unchanged"
-      ? "这份逐字稿已经存在，无需重复写入。"
+      ? "这份剪藏已经存在，无需重复写入。"
       : saved.status === "created-with-suffix"
         ? "同名文件已存在，已静默另存一份。"
         : "已静默存入 Obsidian，未切换窗口。";
     setStatus(
-      `${headline}\n${saved.filePath}\n\n${languageSummary}，共 ${entryCount} 条字幕。`,
+      `${headline}\n${saved.filePath}\n\n${itemSummary}。`,
       "success"
     );
   } catch (error) {
@@ -278,10 +306,10 @@ async function copyOnly() {
   setBusy(true);
   try {
     await persistSettings();
-    const { markdown, entryCount, languageSummary } = await prepareMarkdown();
+    const { markdown, itemSummary } = await prepareMarkdown();
     await copyMarkdown(markdown);
     setStatus(
-      `Markdown 已复制：${languageSummary}，共 ${entryCount} 条字幕。`,
+      `Markdown 已复制：${itemSummary}。`,
       "success"
     );
   } catch (error) {
@@ -298,8 +326,7 @@ async function downloadMarkdown() {
     const {
       markdown,
       filePath,
-      entryCount,
-      languageSummary
+      itemSummary
     } = await prepareMarkdown();
     const filename = filePath.split("/").pop();
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
@@ -310,7 +337,7 @@ async function downloadMarkdown() {
     link.click();
     URL.revokeObjectURL(url);
     setStatus(
-      `已下载 ${filename}：${languageSummary}，共 ${entryCount} 条字幕。`,
+      `已下载 ${filename}：${itemSummary}。`,
       "success"
     );
   } catch (error) {
@@ -325,19 +352,22 @@ elements.testConnection.addEventListener("click", testConnection);
 elements.copy.addEventListener("click", copyOnly);
 elements.download.addEventListener("click", downloadMarkdown);
 elements.targetFolder.addEventListener("change", persistSettings);
+elements.linuxdoTargetFolder.addEventListener("change", persistSettings);
 elements.restApiUrl.addEventListener("change", persistSettings);
 elements.restApiKey.addEventListener("change", persistSettings);
 elements.includeTimestamps.addEventListener("change", persistRenderSettings);
 elements.speakerMode.addEventListener("change", persistRenderSettings);
 elements.subtitleMode.addEventListener("change", persistExtractionSettings);
 elements.autoEnableSubtitles.addEventListener("change", persistExtractionSettings);
+elements.linuxdoScope.addEventListener("change", persistExtractionSettings);
 
 loadSettings().catch(error => setStatus(error?.message || String(error), "error"));
 
 activeSupportedTab()
   .then(({ platform }) => {
-    elements.platformLabel.textContent = platform.label;
+    setPlatformPresentation(platform);
   })
   .catch(() => {
-    elements.platformLabel.textContent = "B站 · YouTube · 小鹅通";
+    activePlatform = null;
+    elements.platformLabel.textContent = "视频 · linux.do";
   });

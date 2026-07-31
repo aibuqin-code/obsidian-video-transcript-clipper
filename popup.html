@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Obsidian 视频剪藏</title>
+  <title>Obsidian 多源剪藏</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,14 +12,14 @@
       <div class="brand">
         <img src="icons/icon48.png" alt="" width="38" height="38">
         <div>
-          <h1>视频剪藏</h1>
-          <p>平台字幕 → Markdown</p>
+          <h1>多源剪藏</h1>
+          <p>视频字幕 · 讨论主题 → Markdown</p>
         </div>
       </div>
       <span id="platform-label" class="platform-mark">识别中</span>
     </header>
 
-    <label class="choice-row">
+    <label class="choice-row video-only">
       <span>
         <strong>字幕</strong>
         <small>英文原声优先保留英文</small>
@@ -33,7 +33,7 @@
       </select>
     </label>
 
-    <label class="choice-row">
+    <label class="choice-row video-only">
       <span>
         <strong>说话人</strong>
         <small>默认单人；按需提示 AI 分角色</small>
@@ -45,7 +45,7 @@
       </select>
     </label>
 
-    <label class="switch-row">
+    <label class="switch-row video-only">
       <span>
         <strong>自动选择字幕</strong>
         <small>静默选轨；必要时提示手动操作</small>
@@ -54,13 +54,25 @@
       <i aria-hidden="true"></i>
     </label>
 
-    <label class="switch-row">
+    <label class="switch-row video-only">
       <span>
         <strong>时间戳</strong>
         <small>回看或剪辑时开启</small>
       </span>
       <input id="include-timestamps" type="checkbox" aria-label="保留时间戳">
       <i aria-hidden="true"></i>
+    </label>
+
+    <label class="choice-row linuxdo-only" hidden>
+      <span>
+        <strong>讨论范围</strong>
+        <small>完整读取，不要求滚动到底</small>
+      </span>
+      <select id="linuxdo-scope" aria-label="linux.do 帖子范围">
+        <option value="all">全部楼层</option>
+        <option value="author">主帖 + 楼主回复</option>
+        <option value="main">只保存主帖</option>
+      </select>
     </label>
 
     <button id="save" class="primary" type="button">静默存入 Obsidian</button>
@@ -90,10 +102,15 @@
           <input id="rest-api-key" type="password" spellcheck="false" autocomplete="off"
             placeholder="从 Obsidian Local REST API 设置复制">
         </label>
-        <label>
-          <span>保存目录</span>
+        <label class="video-only">
+          <span>视频逐字稿目录</span>
           <input id="target-folder" type="text" spellcheck="false" autocomplete="off"
             placeholder="例如：Inbox/视频逐字稿">
+        </label>
+        <label class="linuxdo-only" hidden>
+          <span>linux.do 帖子目录</span>
+          <input id="linuxdo-target-folder" type="text" spellcheck="false" autocomplete="off"
+            placeholder="例如：Inbox/LinuxDo">
         </label>
         <button id="test-connection" class="connection-test" type="button">测试后台连接</button>
         <p class="settings-help">需要 Obsidian 保持运行并启用 Local REST API。保存时不会打开笔记，也不会抢占当前窗口。</p>

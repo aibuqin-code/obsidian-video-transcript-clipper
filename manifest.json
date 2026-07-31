@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Obsidian 视频剪藏",
-  "version": "0.9.0",
-  "description": "为 Obsidian 特制：提取 B站、YouTube 与小鹅通现成字幕，后台静默写入，不切换应用窗口。",
+  "name": "Obsidian 多源剪藏",
+  "version": "1.0.0",
+  "description": "为 Obsidian 特制：剪藏 B站、YouTube、小鹅通现成字幕与 linux.do 完整主题，后台静默写入。",
   "permissions": [
     "activeTab",
     "clipboardWrite",
@@ -15,6 +15,8 @@
     "https://api.bilibili.com/*",
     "https://aisubtitle.hdslb.com/*",
     "https://www.youtube.com/*",
+    "https://linux.do/*",
+    "https://www.linux.do/*",
     "http://127.0.0.1:27123/*",
     "https://127.0.0.1:27124/*",
     "http://localhost:27123/*",
@@ -31,7 +33,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Obsidian 视频剪藏",
+    "default_title": "Obsidian 多源剪藏",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
